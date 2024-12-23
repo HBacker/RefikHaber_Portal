@@ -1,0 +1,95 @@
+﻿@model Haber
+
+@{
+    ViewData["Title"] = "Güncelle";
+
+
+
+    Layout = "_layoutAdminLTE";
+}
+
+<form method="post" enctype="multipart/form-data">
+	<div class="container" style="margin-left:275px;margin-top:30px">
+        <div class="row pb-4">
+
+            <h1 style="color: black;">@(Model == null ? "Haber Ekle" : "Haberi Düzenle")</h1>
+            </hr>
+        </div>
+
+    <input asp-for="ResimUrl" hidden />
+
+    <div class="row">
+        <div class="col-10">
+
+
+
+                
+
+            <div class="mb-3">
+                <label asp-for="Baslik" class="p-0">Başlık</label>
+                <input asp-for="Baslik" class="form-control" />
+                <span asp-validation-for="Baslik" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="KategoriId" class="p-0">Kategori</label>
+                    <select asp-for="KategoriId" asp-items="ViewBag.HaberTuruList" class="form-select"></select>
+                </div>
+            <div class="mb-3">
+                <label asp-for="Aciklama" class="p-0">Açıklama</label>
+                <input asp-for="Aciklama" class="form-control" />
+                <span asp-validation-for="Aciklama" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Yazar" class="p-0">Yazar</label>
+                <input asp-for="Yazar" class="form-control" />
+                <span asp-validation-for="Yazar" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Puan" class="p-0">Puan</label>
+                <input asp-for="Puan" class="form-control" />
+                <span asp-validation-for="Puan" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ResimUrl" class="p-0">Görsel</label>
+                <input type="file" name="file" class="form-control" />
+
+            </div>
+                @if (Model != null)
+
+                {
+                    <div class="mb-3" style="max-width: 300px; max-height: 300px;">
+                        <label class="p-0">Mevcut Görsel</label>
+                        <img src="@Model.ResimUrl"
+                             alt="Görsel Yok!"
+                             width="100%"
+                             style="border-radius:7px; border:1px solid #bbb9b9;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                        <span style="display: none; color: #888;">Görsel bulunamadı.</span>
+                    </div>
+                }
+
+            @if (Model != null)
+            {
+                <button type="submit" class="btn btn-lg btn-success">Güncelle</button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-lg btn-primary" style="width:250px">Haber Ekle</button>
+            }
+
+            <a asp-controller="Haber" asp-action="Index" class="btn btn-lg btn-danger">
+                Vazgeç
+            </a>
+
+        </div>
+
+        </div>
+
+
+    </div>
+
+
+
+</form>
+

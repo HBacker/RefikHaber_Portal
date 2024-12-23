@@ -1,0 +1,59 @@
+﻿@using RefikHaber.Models
+
+@{
+    ViewData["Title"] = "Kullanıcılar";
+
+    Layout = "_layoutAdminLTE";
+}
+
+<div class="container" style="margin-left:275px;margin-top:30px">
+    <h1 style="margin-left:270px">Kullanıcılar</h1>
+    <hr />
+    <div class="row" style="position:relative; left:270px">
+        <div class="col-md-8">
+            <div id="progress"></div>
+
+            <!-- Tablo burada -->
+            <table class="table table-striped" id="tbUsers">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Kullanıcı Adı</th>
+                        <th>E-Mail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            LoadUsers();
+
+            function LoadUsers() {
+                        $.ajax({
+                    url: "/RoleManager/UserListAjax",  // API URL'niz burada
+                    type: "GET",
+                    data: {},
+                    success: function (data) {
+                        // Gelen veriyi işleyerek tabloya ekliyoruz
+                        $.each(data, function (index, item) {
+                                    // Veritabanından gelen veriyi tablo satırına ekliyoruz
+                                    var user = '<tr><td>' + item.id + '</td><td>' + item.userName + '</td><td>' + item.email;
+
+                                    // Yeni satırı tbody'ye ekliyoruz
+                            $("#tbUsers tbody").append(user);
+                        });
+                    },
+                    error: function (e) {
+                        console.log("Bir hata oluştu: ", e);
+                    },
+                });
+                    }
+                });
+    </script>
+}
