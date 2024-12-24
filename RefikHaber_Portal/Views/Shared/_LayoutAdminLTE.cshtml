@@ -25,6 +25,11 @@
     <link rel="stylesheet" href="~/AdminLTE/plugins/daterangepicker/daterangepicker.css">
     <!-- summernote -->
     <link rel="stylesheet" href="~/AdminLTE/plugins/summernote/summernote-bs4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/">
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
@@ -225,10 +230,29 @@
     <script src="~/AdminLTE/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
     <!-- AdminLTE App -->
     <script src="~/AdminLTE/dist/js/adminlte.js"></script>
-    <!-- AdminLTE for demo purposes -->
-    <script src="~/AdminLTE/dist/js/demo.js"></script>
-    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
     <script src="~/AdminLTE/dist/js/pages/dashboard.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/GeneralHub")
+            .build();
+
+        connection.on("ReceiveNotification", (message) => {
+            showAlert(message);
+        });
+
+        function showAlert(message) {
+            Swal.fire({
+                title: 'Bildirim',
+                text: message,
+                icon: 'info',
+                timer: 3000,
+                showConfirmButton: true,
+                confirmButtonText: 'Tamam'
+            });
+        }
+
+        connection.start().catch(err => console.error(err.toString()));
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

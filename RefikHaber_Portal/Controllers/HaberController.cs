@@ -3,38 +3,46 @@ using haberPortali1.Utility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RefikHaber.Repostories;
+using Microsoft.AspNetCore.SignalR;
+using RefikHaber.Hubs; // GeneralHub için namespace
 
-namespace haberPortali1.Controllers
+namespace habercPortali1.Controllers
 {
     public class HaberController : Controller
     {
         private readonly IHaberRepository _haberRepository;
         private readonly IHaberTuruRepository _haberTuruRepository;
-        public readonly IWebHostEnvironment _webHostEnvironment;
-        public HaberController(IHaberRepository haberRepository, IHaberTuruRepository haberTuruRepository, IWebHostEnvironment webHostEnvironment)
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IHubContext<GeneralHub> _hubContext; // SignalR Hub Context
+
+        public HaberController(IHaberRepository haberRepository,
+                               IHaberTuruRepository haberTuruRepository,
+                               IWebHostEnvironment webHostEnvironment,
+                               IHubContext<GeneralHub> hubContext)
         {
             _haberRepository = haberRepository;
             _haberTuruRepository = haberTuruRepository;
             _webHostEnvironment = webHostEnvironment;
+            _hubContext = hubContext;
         }
+
         [Authorize(Roles = "Admin,Kullanici")]
         public IActionResult Index()
         {
-            // Tüm haberleri al
             List<Haber> objHaberList = _haberRepository.GetAll(includeProps: "HaberTuru").ToList();
             return View(objHaberList);
         }
+
         [Authorize(Roles = "Admin,Kullanici")]
         public IActionResult Privacy()
         {
-            // Tüm haberleri al
             List<Haber> objHaberList = _haberRepository.GetAll(includeProps: "HaberTuru").ToList();
             return View(objHaberList);
         }
+
         [Authorize(Roles = UserRoles.Role_Admin)]
-        public IActionResult EkleGuncelle(int? id) 
+        public IActionResult EkleGuncelle(int? id)
         {
             IEnumerable<SelectListItem> HaberTuruList = _haberTuruRepository.GetAll()
                 .Select(k => new SelectListItem
@@ -45,83 +53,57 @@ namespace haberPortali1.Controllers
 
             ViewBag.HaberTuruList = HaberTuruList;
 
-            if(id == null|| id == 0)
+            if (id == null || id == 0)
             {
                 return View();
             }
             else
             {
-                //guncelleme
-            Haber? haberVt = _haberRepository.Get(u=>u.Id==id);
-            if (haberVt == null)
-            {
-                return NotFound();
-            }
-            return View(haberVt);
+                Haber? haberVt = _haberRepository.Get(u => u.Id == id);
+                if (haberVt == null)
+                {
+                    return NotFound();
+                }
+                return View(haberVt);
             }
         }
+
         [Authorize(Roles = UserRoles.Role_Admin)]
         [HttpPost]
-        public IActionResult EkleGuncelle(Haber haber, IFormFile? file)
+        public async Task<IActionResult> EkleGuncelle(Haber haber, IFormFile? file)
         {
-
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 string wwwRootPath = _webHostEnvironment.WebRootPath;
-                string haberPath = Path.Combine(wwwRootPath, wwwRootPath,@"img");
+                string haberPath = Path.Combine(wwwRootPath, @"img");
 
-                if(file !=null)
-                { 
-                using(var fileStream = new FileStream(Path.Combine(haberPath, file.FileName),FileMode.Create))
+                if (file != null)
                 {
-                    file.CopyTo(fileStream);
-                }
-                haber.ResimUrl = @"\img\" + file.FileName;
+                    using (var fileStream = new FileStream(Path.Combine(haberPath, file.FileName), FileMode.Create))
+                    {
+                        file.CopyTo(fileStream);
+                    }
+                    haber.ResimUrl = @"\img\" + file.FileName;
                 }
 
                 if (haber.Id == 0)
                 {
                     _haberRepository.Ekle(haber);
                     TempData["basarili"] = "Yeni Haber Başarıyla Oluşturuldu!";
+                    await _hubContext.Clients.All.SendAsync("ReceiveNotification", $"Yeni bir haber eklendi: {haber.Baslik}");
                 }
                 else
                 {
                     _haberRepository.Guncelle(haber);
                     TempData["basarili"] = "Haber Güncelleme Başarılı!";
+                    await _hubContext.Clients.All.SendAsync("ReceiveNotification", $"Haber güncellendi: {haber.Baslik}");
                 }
 
                 _haberRepository.Kaydet();
-                return RedirectToAction("Index","Haber");
+                return RedirectToAction("Index", "Haber");
             }
             return View();
         }
-        /*
-        public IActionResult Guncelle(int? id)
-        {
-            if (id == null || id == 0) 
-            {
-                return NotFound();
-            }
-            Haber? haberVt = _haberRepository.Get(u=>u.Id==id);
-            if (haberVt == null)
-            {
-                return NotFound();
-            }
-            return View(haberVt);
-        } */
-
-        /* [HttpPost]
-         public IActionResult Guncelle(Haber haber)
-         {
-             if (ModelState.IsValid)
-             {
-                 _haberRepository.Guncelle(haber);
-                 _haberRepository.Kaydet();
-                 TempData["basarili"] = "Haber Başarıyla Güncellendi";
-                 return RedirectToAction("Index", "Haber");
-             }
-             return View();
-         }*/
 
         [Authorize(Roles = UserRoles.Role_Admin)]
         public IActionResult Sil(int? id)
@@ -152,6 +134,7 @@ namespace haberPortali1.Controllers
             TempData["basarili"] = "Haber Başarıyla Silindi";
             return RedirectToAction("Index", "Haber");
         }
+
         [Authorize(Roles = "Admin,Kullanici")]
         public IActionResult Goruntule(int? id)
         {
@@ -166,8 +149,7 @@ namespace haberPortali1.Controllers
                 return NotFound();
             }
 
-            return View(haber); 
+            return View(haber);
         }
-
     }
 }

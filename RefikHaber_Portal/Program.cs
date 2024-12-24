@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using RefikHaber.Repostories;
 using RefikHaber_Portal.Repositories;
+using Microsoft.AspNetCore.SignalR;
+using RefikHaber.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,9 +32,11 @@ builder.Services.AddScoped<IHaberTuruRepository, HaberTuruRepository>();
 builder.Services.AddScoped<IHaberRepository, HaberRepository>();
 builder.Services.AddScoped<RoleManagerRepository>();
 
-
 // Email sender service
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+// SignalR service
+builder.Services.AddSignalR(); // SignalR servisini ekleyin
 
 var app = builder.Build();
 
@@ -54,6 +58,9 @@ app.UseAuthorization();
 // Map Razor Pages
 app.MapRazorPages();
 
+// Map SignalR hubs
+app.MapHub<GeneralHub>("/generalHub"); // GeneralHub için SignalR endpoint'i
+
 // Map API routes
 app.MapControllers(); // API controller'larını haritalandır
 
@@ -61,4 +68,5 @@ app.MapControllers(); // API controller'larını haritalandır
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.Run();
+
+    app.Run();
